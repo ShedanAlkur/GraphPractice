@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h3>Визуализация математических функций</h3>
+    </header>
+    <div id="float-coord" class="floatBlock">
+        (x,y)
+    </div>
+    <div id="left" left>
+        <div id="user-input-containers"><div class="sticky-header">f(x):</div></div>
+        <div id="variables-input-containers"><div class="sticky-header">Переменные:</div></div>
+    </div>
+    <div id="right" left>
+        <canvas width="500" height="500" id="graph-canvas"></canvas>
+    </div>
+
+    <script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
+
+    <script type="text/javascript" src="MathExpression.js"></script>
+    <script type="text/javascript" src="MathGraph.js"></script>
+    <script type="text/javascript" src="Controller.js"></script>
+
+    <script>
+        var graph;
+
+        // Create Element.remove() function if not exist
+        if (!('remove' in Element.prototype)) {
+            Element.prototype.remove = function () {
+                if (this.parentNode) {
+                    this.parentNode.removeChild(this);
+                }
+            };
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            graph = new Graph({
+                canvas: document.getElementById("graph-canvas"),
+                minX: -10,
+                maxX: 10,
+                minY: -10,
+                maxY: 10,
+                unitsPerTick: 1
+            });
+
+            graph.drawEquationByX(0, function (x) {
+                return 5 * Math.sin(x);
+            }, "green", 1);
+            graph.render();
+
+            /*controller = new Controller({
+                graph: graph,
+                hExpressionsContainer: document.getElementById('user-input-containers'),
+                hVariablesContainer: document.getElementById('variables-input-containers')
+            });*/
+
+            controller.hExpressionsContainer = document.getElementById('user-input-containers');
+            controller.hVariablesContainer = document.getElementById('variables-input-containers');
+            controller.setGraph(graph);
+            controller.addExpression();
+            controller.addVariable('var');
+            controller.render();
+        });
+
+        window.onload = function () {
+
+        };
+
+
+    </script>
+</body>
+
+</html>

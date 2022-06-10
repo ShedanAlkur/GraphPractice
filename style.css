@@ -1,0 +1,143 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: rgb(239, 239, 239);
+    padding: 0;
+    margin: 0;
+    z-index: 2;
+    font-size: 20px;
+    height: 35px;
+}
+
+header>h3 {
+    padding: 4px;
+    margin: 0px;
+}
+
+body {
+    color: rgb(102, 102, 102);
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    border: none;
+    width: 24px;
+    height: 24px;
+    /* border-radius: 50%; */
+    background-color: inherit;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+}
+
+#left,
+#right {
+    position: absolute;
+    top: 35px;
+    bottom: 0;
+}
+
+#left {
+    z-index: 1;
+    width: 300px;
+    background-color: rgb(239, 239, 239);
+    border-right: 1px solid rgb(119, 119, 119);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+
+#right {
+    right: 0;
+    left: 300px;
+    border-top: 1px solid rgb(119, 119, 119);
+}
+
+#user-input-containers,
+#variables-input-containers {
+    max-height: 50%;
+    overflow: auto;
+    background-color: rgb(239, 239, 239);
+    border-top: 1px solid rgb(119, 119, 119);
+
+}
+
+#user-input-containers,
+#variables-input-containers {
+    border-bottom: 1px dashed rgb(119, 119, 119);
+}
+
+#graph-canvas {
+    border-right: 1px solid;
+    border-bottom: 1px solid;
+    background-color: white;
+
+}
+
+.expression-container,
+.variable-container {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid;
+    background-color: white;
+    margin: 2px;
+    padding: 6px;
+    /* width: 600px; */
+}
+
+.expression-container>div,
+.variable-container>div {
+    width: 100%;
+    display: flex;
+}
+
+.expression-container>div>*,
+.variable-container>div>* {
+    margin: 1px 2px;
+}
+
+.expression-container__function,
+.variable-container__value,
+.variable-container__range {
+    flex: 1;
+}
+
+.variable-container__limit {
+    width: 40px;
+}
+
+
+.floatBlock {
+    min-width: 20px;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid rgb(119, 119, 119);
+    box-shadow: rgb(85, 85, 85) 4px 4px 4px;
+    color: rgb(102, 102, 102);
+    background-color: rgb(239, 239, 239);
+    opacity: 1;
+    z-index: 1100;
+    text-align: left;
+    max-width: 200px;
+    visibility: visible;
+    position: absolute;
+    display: none;
+}
+
+.sticky-header {
+    position: sticky;
+    top: 0;
+    background-color: inherit;
+    border-bottom: 1px dashed rgb(119, 119, 119);
+    margin: 2px;
+}
