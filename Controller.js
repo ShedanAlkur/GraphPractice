@@ -81,7 +81,8 @@ var controller = new (function Controller(con) {
 
     Controller.prototype.redrawByIndex = function (index) {
         let element = this.expressionContainers[index];
-        let color = element.querySelector('#expression-color').value;
+        let id = element.id.replace('expression-container-', '');
+        let color = document.getElementById('expression-color-' + id).value;
 
         this._graph.drawEquationByX(index, this.delegates[index], color, this.graphThickness);
     }
@@ -178,9 +179,10 @@ const _onwheelCanvas = function (event) {
 /// HTML BLOCK CONTRUCTORS ///
 //////////////////////////////
 function _createExpressionContainer(index) {
+    let id = getId();
     let container = document.createElement('div');
     container.className = "expression-container";
-    // container.id = 'expression-container-' + index;
+    container.id = 'expression-container-' + id;
 
     let el;
     let lineContainer;
@@ -190,7 +192,7 @@ function _createExpressionContainer(index) {
     el = document.createElement('input');
     el.type = 'color';
     el.className = 'expression-container__color';
-    el.id = 'expression-color';
+    el.id = 'expression-color-' + id;
     el.value = '#' + ('00000' + (Math.random() * (1 << 24) | 0).toString(16)).slice(-6);
     el.addEventListener('change', _onChangeExpressionColor);
     lineContainer.appendChild(el);
@@ -198,7 +200,7 @@ function _createExpressionContainer(index) {
     el = document.createElement('input');
     el.type = 'text';
     el.className = 'expression-container__function';
-    el.id = 'expression-function';
+    el.id = 'expression-function-' + id;
     el.addEventListener('input', _onInputExpression);
     el.addEventListener('blur', _onBlurExpression);
     el.addEventListener('change', _onChangeExpression);
@@ -211,7 +213,7 @@ function _createExpressionContainer(index) {
     lineContainer.appendChild(document.createElement('span')).innerText = 'MathJax: ';
     // mathJax
     el = document.createElement('span');
-    el.id = 'expression-mathjax';
+    el.id = 'expression-mathjax-' + id;
     lineContainer.appendChild(el);
     container.appendChild(lineContainer);
 
@@ -219,8 +221,10 @@ function _createExpressionContainer(index) {
 }
 
 function _createVariableContainer(name) {
+    let id = getId();
     let container = document.createElement('div');
     container.className = "variable-container";
+    container.id = 'variable-container-' + id;
     container.varName = name;
 
     let el;
@@ -235,7 +239,7 @@ function _createVariableContainer(name) {
     el = document.createElement('input');
     el.type = 'text';
     el.className = 'variable-container__value';
-    el.id = 'variable';
+    el.id = 'variable-' + id;
     el.addEventListener('input', _onInputVariable);
     el.value = 0;
     lineContainer.appendChild(el);
@@ -248,7 +252,7 @@ function _createVariableContainer(name) {
     el = document.createElement('input');
     el.type = 'text';
     el.className = 'variable-container__limit';
-    el.id = 'variable-min';
+    el.id = 'variable-min-' + id;
     el.placeholder = 'min'
     el.value = -10;
     el.addEventListener('change', _onChangeVariableMin);
@@ -258,7 +262,7 @@ function _createVariableContainer(name) {
     el.type = 'range';
     el.className = 'variable-container__range';
     console.log(el);
-    el.id = 'variable-range';
+    el.id = 'variable-range-' + id;
     el.addEventListener('input', _onInputVariableRange);
     el.value = 0;
     el.min = -10;
@@ -269,7 +273,7 @@ function _createVariableContainer(name) {
     el = document.createElement('input');
     el.type = 'text';
     el.className = 'variable-container__limit';
-    el.id = 'variable-max';
+    el.id = 'variable-max-' + id;
     el.placeholder = 'max'
     el.value = 10;
     el.addEventListener('change', _onChangeVariableMax);
@@ -293,6 +297,7 @@ const _onChangeExpressionColor = function (event) {
 
 const _onInputExpression = function (event) {
     let element = event.currentTarget;
+    let id = element.id.replace('expression-function-', '');
     let inputIndex = controller.expressionContainers.indexOf(element.parentNode.parentNode);
     let str = element.value.toLowerCase().trim();
 
@@ -307,7 +312,7 @@ const _onInputExpression = function (event) {
         controller.delegates[inputIndex] = null;
 
         // mathjax
-        let mathJax = element.parentNode.parentNode.querySelector('#expression-mathjax');
+        let mathJax = document.getElementById('expression-mathjax-' + id);
         mathJax.innerHTML = '\\(' + controller.expressions[inputIndex].getMathjax() + '\\)';
         MathJax.Hub.Queue(["Typeset", MathJax.Hub, mathJax]);
 
@@ -316,7 +321,7 @@ const _onInputExpression = function (event) {
         console.log(js);
         controller.delegates[inputIndex] =
             _createDelegate(js, 'x');
-        let color = element.parentNode.parentNode.querySelector('#expression-color').value;
+        let color = document.getElementById('expression-color-' + id).value;
         graph.drawEquationByX(inputIndex, controller.delegates[inputIndex]
             , color, controller.graphThickness);
         controller._graph.render();
@@ -412,15 +417,14 @@ const _onChangeExpression = function (event) {
 /////////////////////////
 const _onInputVariable = function (event) {
     let element = event.currentTarget;
+    let id = element.id.replace('variable-', '');
     let name = element.parentNode.parentNode.varName;
 
     controller.variables.set(name, parseFloat(element.value));
-    element.parentNode.parentNode.querySelector('#variable-range').value = element.value;
+    document.getElementById('variable-range-' + id).value = element.value;
 
     let color;
     for (let i of controller.variableUsageMap.get(name)) {
-        color = controller.expressionContainers[i]
-            .querySelector('#expression-color').value;
         controller.redrawByIndex(i);
     }
     controller._graph.render();
@@ -428,39 +432,40 @@ const _onInputVariable = function (event) {
 
 const _onChangeVariableMin = function (event) {
     let element = event.currentTarget;
+    let id = element.id.replace('variable-min-', '');
 
     let min = parseFloat(element.value);
-    let max = parseFloat(element.parentNode.parentNode.querySelector('#variable-max').value);
+    let max = parseFloat(document.getElementById('variable-max-' + id).value);
     let step = (max - min) / 100;
 
-    let range = element.parentNode.parentNode.querySelector('#variable-range');
+    let range = document.getElementById('variable-range-' + id);
     range.min = min;
     range.step = step;
 }
 
 const _onChangeVariableMax = function (event) {
     let element = event.currentTarget;
+    let id = element.id.replace('variable-max-', '');
 
-    let min = parseFloat(element.parentNode.parentNode.querySelector('#variable-min').value);
+    let min = parseFloat(document.getElementById('variable-min-' + id).value);
     let max = parseFloat(element.value);
     let step = (max - min) / 100;
 
-    let range = element.parentNode.parentNode.querySelector('#variable-range');
+    let range = document.getElementById('variable-range-' + id);
     range.max = max;
     range.step = step;
 }
 
 const _onInputVariableRange = function (event) {
     let element = event.currentTarget;
+    let id = element.id.replace('variable-range-', '');
     let name = element.parentNode.parentNode.varName;
 
     controller.variables.set(name, parseFloat(element.value));
-    element.parentNode.parentNode.querySelector('#variable').value = element.value;
+    document.getElementById('variable-' + id).value = element.value;
 
     let color;
     for (let i of controller.variableUsageMap.get(name)) {
-        color = controller.expressionContainers[i]
-            .querySelector('#expression-color').value;
         controller.redrawByIndex(i);
     }
     controller._graph.render();
@@ -471,8 +476,8 @@ const _onInputVariableRange = function (event) {
 /////////////////
 var getId = (function () {
     var incrementingId = 0;
-    return function (prefix) {
-        return prefix + incrementingId++;
+    return function () {
+        return incrementingId++;
     };
 }());
 
