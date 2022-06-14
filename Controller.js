@@ -42,10 +42,8 @@ var controller = new (function Controller(con) {
     Controller.prototype.render = function () { this._graph.render(); }
 
     Controller.prototype.getFloatCoordText = function (x, y) {
-        let accuracyX = this._graph.recommendedAccuracyX;
-        return `(${+((x - this._graph._centerX) / this._graph._scaleX).toFixed(accuracyX)
-            }, ${+((y - this._graph._centerY) / -this._graph._scaleY).toFixed(accuracyX)
-            })`;
+        let [graphX, graphY] = this._graph.CoordsCanvasToGraph(x, y);
+        return `(${graphX}, ${graphY})`;
     }
 
     Controller.prototype.addExpression = function () {
@@ -261,7 +259,6 @@ function _createVariableContainer(name) {
     el = document.createElement('input');
     el.type = 'range';
     el.className = 'variable-container__range';
-    console.log(el);
     el.id = 'variable-range-' + id;
     el.addEventListener('input', _onInputVariableRange);
     el.value = 0;

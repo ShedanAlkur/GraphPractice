@@ -5,9 +5,9 @@ function Graph(con) {
     this._maxX = con.maxX;
     this._minY = con.minY;
     this._maxY = con.maxY;
-    this.unitsPerTick = con.unitsPerTick;
 
-    // constants  
+    // constants
+    this.tickWidth = 150;
     this.axisColor = "#000000";
     this.axisWidth = 2;
     this.textColor = "#000000";
@@ -17,23 +17,16 @@ function Graph(con) {
 
     // relationships  
     this.domContext = this.domCanvas.getContext("2d");
-    this._rangeY = this._maxY - this._minY;
-    this._rangeX = this._maxX - this._minX;
-    this._iterationX = (this._maxX - this._minX) / 1000;
-    this.recommendedAccuracyX = Math.max(0, -Math.log10(this._rangeX)) + 3
-
     this._width = this.domCanvas.width;
     this._height = this.domCanvas.height;
-    this._scaleX = this._width / this._rangeX;
-    this._scaleY = this._height / this._rangeY;
-    this._centerX = -Math.sign(this._minX) * (Math.round(Math.abs(this._minX / this._rangeX) * this._width));
-    this._centerY = Math.sign(this._maxY) * (Math.round(Math.abs(this._maxY / this._rangeY) * this._height));
+
+    this._updateProps();
 
     // virtual canvases
     this.axisLayer = new Layer(this._width, this._height)
     this.graphLayers = [];
 
-    // draw x and y axis  
+    // draw x and y axis
     this.drawAxis();
 }
 
@@ -43,16 +36,7 @@ Graph.prototype.offset = function (offsetX, offsetY) {
     this._minY -= offsetY;
     this._maxY -= offsetY;
 
-    ///
-    this._rangeX = this._maxX - this._minX;
-    this._rangeY = this._maxY - this._minY;
-    this._iterationX = this._rangeX / 1000;
-    this.recommendedAccuracyX = Math.max(0, -Math.log10(this._rangeX)) + 3
-
-    this._scaleX = this._width / this._rangeX;
-    this._scaleY = this._height / this._rangeY;
-    this._centerX = -Math.sign(this._minX) * (Math.round(Math.abs(this._minX / this._rangeX) * this._width));
-    this._centerY = Math.sign(this._maxY) * (Math.round(Math.abs(this._maxY / this._rangeY) * this._height));
+    this._updateProps();
 }
 
 Graph.prototype.scale = function (centerX, centerY, scaleX, scaleY) {
@@ -64,17 +48,47 @@ Graph.prototype.scale = function (centerX, centerY, scaleX, scaleY) {
 
     this._maxX = this._minX + newRangeX;
     this._maxY = this._minY + newRangeY;
-    ///
+
+    this._updateProps();
+}
+
+Graph.prototype._updateProps = function () {
+    if (this._maxX <= this._minX)
+        throw new Error('Wrong xRange: ' + `${this._minX}<x<${this._maxX}`);
+    if (this._maxY <= this._minY)
+        throw new Error('Wrong yRange: ' + `${this._minY}<y<${this._maxY}`);
+
     this._rangeX = this._maxX - this._minX;
     this._rangeY = this._maxY - this._minY;
-    this._iterationX = this._rangeX / 1000;
-    this.recommendedAccuracyX = Math.max(0, -Math.log10(this._rangeX)) + 3
 
     this._scaleX = this._width / this._rangeX;
     this._scaleY = this._height / this._rangeY;
     this._centerX = -Math.sign(this._minX) * (Math.round(Math.abs(this._minX / this._rangeX) * this._width));
     this._centerY = Math.sign(this._maxY) * (Math.round(Math.abs(this._maxY / this._rangeY) * this._height));
+
+    this._iterationX = this._rangeX / 1000;
+
+    this.recommendedAccuracyX = Math.max(3, Math.floor(Math.log10(this._scaleX)) + 1)
+    this.recommendedAccuracyY = Math.max(3, Math.floor(Math.log10(this._scaleY)) + 1)
+
+    this.unitsPerTickX = this._getUnitsPerTick(this._scaleX);
+    this.unitsPerTickY = this._getUnitsPerTick(this._scaleY);
 }
+
+
+Graph.prototype._getUnitsPerTick = function (scale) {
+    let r = this.tickWidth / scale;
+    let p = Math.floor(Math.log10(r));
+
+    r /= Math.pow(10, p);
+    if (r >= 5) r = 5;
+    else if (r >= 2) r = 2;
+    else if (r >= 1) r = 1;
+
+    r *= Math.pow(10, p)
+    return r;
+}
+
 
 Graph.prototype._createCanvas = function (index) {
     this.graphCanvases[index] = document.createElement('canvas');
@@ -101,7 +115,7 @@ Graph.prototype.drawXAxis = function () {
     context.strokeStyle = this.tickColor;
 
     // draw tick marks  
-    var xPosIncrement = this.unitsPerTick * this._scaleX;
+    var xPosIncrement = this.unitsPerTickX * this._scaleX;
     var xPos, unit;
     let savedPos;
 
@@ -121,11 +135,11 @@ Graph.prototype.drawXAxis = function () {
     // draw left tick marks  
     if (this._maxX >= 0) {
         xPos = this._centerX - xPosIncrement;
-        unit = -1 * this.unitsPerTick;
+        unit = -1 * this.unitsPerTickX;
     }
     else {
         xPos = this._width - (this._maxX * this._scaleX % xPosIncrement);
-        unit = (this._maxX - this._maxX % this.unitsPerTick);
+        unit = (this._maxX - this._maxX % this.unitsPerTickX);
     }
     context.beginPath();
     savedPos = xPos;
@@ -137,8 +151,8 @@ Graph.prototype.drawXAxis = function () {
     }
     xPos = savedPos;
     while (xPos > 0) {
-        context.fillText(unit, xPos, textPosY);
-        unit -= this.unitsPerTick;
+        context.fillText(round(unit, this.recommendedAccuracyX), xPos, textPosY);
+        unit -= this.unitsPerTickX;
         xPos = (xPos - xPosIncrement);
     }
 
@@ -148,11 +162,11 @@ Graph.prototype.drawXAxis = function () {
     // draw right tick marks 
     if (this._minX <= 0) {
         xPos = this._centerX + xPosIncrement;
-        unit = 1 * this.unitsPerTick;
+        unit = 1 * this.unitsPerTickX;
     }
     else {
         xPos = -(this._minX * this._scaleX % xPosIncrement);
-        unit = (this._minX - this._minX % this.unitsPerTick);
+        unit = (this._minX - this._minX % this.unitsPerTickX);
     }
     context.beginPath();
     savedPos = xPos;
@@ -164,8 +178,8 @@ Graph.prototype.drawXAxis = function () {
     }
     xPos = savedPos;
     while (xPos < this.domCanvas.width) {
-        context.fillText(unit, xPos, textPosY);
-        unit += this.unitsPerTick;
+        context.fillText(round(unit, this.recommendedAccuracyX), xPos, textPosY);
+        unit += this.unitsPerTickX;
         xPos = (xPos + xPosIncrement);
     }
     context.restore();
@@ -183,7 +197,7 @@ Graph.prototype.drawYAxis = function () {
     context.strokeStyle = this.tickColor;
 
     // draw tick marks   
-    var yPosIncrement = this.unitsPerTick * this._scaleY;
+    var yPosIncrement = this.unitsPerTickY * this._scaleY;
     var yPos, unit;
     let savedPos;
 
@@ -203,11 +217,11 @@ Graph.prototype.drawYAxis = function () {
     // draw top tick marks 
     if (this._minY <= 0) {
         yPos = this._centerY - yPosIncrement;
-        unit = this.unitsPerTick;
+        unit = this.unitsPerTickY;
     }
     else {
         yPos = this._height + (this._minY * this._scaleY % yPosIncrement);
-        unit = (this._minY - this._minY % this.unitsPerTick);
+        unit = (this._minY - this._minY % this.unitsPerTickY);
     }
     context.beginPath();
     savedPos = yPos;
@@ -220,19 +234,19 @@ Graph.prototype.drawYAxis = function () {
     yPos = savedPos;
     while (yPos > 0) {
 
-        context.fillText(unit, textPosX, yPos);
-        unit += this.unitsPerTick;
+        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, yPos);
+        unit += this.unitsPerTickY;
         yPos = Math.round(yPos - yPosIncrement);
     }
 
     // draw bottom tick marks  
     if (this._maxY >= 0) {
         yPos = this._centerY + yPosIncrement;
-        unit = -1 * this.unitsPerTick;
+        unit = -1 * this.unitsPerTickY;
     }
     else {
         yPos = (this._maxY * this._scaleY % yPosIncrement);
-        unit = (this._maxY - this._maxY % this.unitsPerTick);
+        unit = (this._maxY - this._maxY % this.unitsPerTickY);
     }
     context.beginPath();
     savedPos = yPos;
@@ -240,15 +254,20 @@ Graph.prototype.drawYAxis = function () {
         context.moveTo(0, yPos);
         context.lineTo(this._height, yPos);
         context.stroke();
-                yPos = Math.round(yPos + yPosIncrement);
+        yPos = Math.round(yPos + yPosIncrement);
     }
     yPos = savedPos;
     while (yPos < this.domCanvas.height) {
-        context.fillText(unit, textPosX, yPos);
-        unit -= this.unitsPerTick;
+        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, yPos);
+        unit -= this.unitsPerTickY;
         yPos = Math.round(yPos + yPosIncrement);
     }
     context.restore();
+};
+
+Graph.prototype.CoordsCanvasToGraph = function (x, y) {
+    return [round((x - this._centerX) / this._scaleX, this.recommendedAccuracyX)
+        , round((y - this._centerY) / -this._scaleY, this.recommendedAccuracyY)];
 };
 
 Graph.prototype.drawEquationByX = function (layerIndex, equation, color, thickness) {
@@ -375,3 +394,9 @@ Layer.prototype.setSize = function (width, height) {
 }
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+
+const round = function (num, accuracy = 0) {
+    if (accuracy < 0) throw new Error('Argument lower than 0: ' + accuracy);
+    let p = Math.max(0, Math.pow(10, accuracy));
+    return Math.round((num + Number.EPSILON) * p) / p
+}
