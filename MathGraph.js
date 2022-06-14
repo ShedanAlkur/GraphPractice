@@ -9,8 +9,11 @@ function Graph(con) {
 
     // constants  
     this.axisColor = "#000000";
-    this.font = "8pt Calibri";
+    this.axisWidth = 2;
+    this.textColor = "#000000";
+    this.font = "10pt Calibri";
     this.tickSize = 20;
+    this.tickColor = "#d4d4d4";
 
     // relationships  
     this.domContext = this.domCanvas.getContext("2d");
@@ -93,15 +96,27 @@ Graph.prototype.drawXAxis = function () {
     context.moveTo(0, this._centerY);
     context.lineTo(this.domCanvas.width, this._centerY);
     context.strokeStyle = this.axisColor;
-    context.lineWidth = 1;
+    context.lineWidth = this.axisWidth;
     context.stroke();
+    context.strokeStyle = this.tickColor;
 
     // draw tick marks  
     var xPosIncrement = this.unitsPerTick * this._scaleX;
     var xPos, unit;
+    let savedPos;
+
+    context.fillStyle = this.textColor;
     context.font = this.font;
     context.textAlign = "center";
     context.textBaseline = "top";
+    let textOffsetY = this.tickSize / 2 + 3;
+    let textPosY = this._centerY + textOffsetY;
+    if (textPosY < textOffsetY) {
+        textPosY = textOffsetY;
+    } else if (textPosY > this._height - textOffsetY) {
+        textPosY = this._height - textOffsetY;
+        context.textBaseline = "bottom";
+    }
 
     // draw left tick marks  
     if (this._maxX >= 0) {
@@ -112,16 +127,25 @@ Graph.prototype.drawXAxis = function () {
         xPos = this._width - (this._maxX * this._scaleX % xPosIncrement);
         unit = (this._maxX - this._maxX % this.unitsPerTick);
     }
+    context.beginPath();
+    savedPos = xPos;
     while (xPos > 0) {
-        context.moveTo(xPos, this._centerY - this.tickSize / 2);
-        context.lineTo(xPos, this._centerY + this.tickSize / 2);
+        context.moveTo(xPos, 0);
+        context.lineTo(xPos, this._height);
         context.stroke();
-        context.fillText(unit, xPos, this._centerY + this.tickSize / 2 + 3);
+        xPos = (xPos - xPosIncrement);
+    }
+    xPos = savedPos;
+    while (xPos > 0) {
+        context.fillText(unit, xPos, textPosY);
         unit -= this.unitsPerTick;
-        xPos = Math.round(xPos - xPosIncrement);
+        xPos = (xPos - xPosIncrement);
     }
 
-    // draw right tick marks  
+    context.save();
+    context.restore();
+
+    // draw right tick marks 
     if (this._minX <= 0) {
         xPos = this._centerX + xPosIncrement;
         unit = 1 * this.unitsPerTick;
@@ -130,13 +154,19 @@ Graph.prototype.drawXAxis = function () {
         xPos = -(this._minX * this._scaleX % xPosIncrement);
         unit = (this._minX - this._minX % this.unitsPerTick);
     }
+    context.beginPath();
+    savedPos = xPos;
     while (xPos < this.domCanvas.width) {
-        context.moveTo(xPos, this._centerY - this.tickSize / 2);
-        context.lineTo(xPos, this._centerY + this.tickSize / 2);
+        context.moveTo(xPos, 0);
+        context.lineTo(xPos, this._height);
         context.stroke();
-        context.fillText(unit, xPos, this._centerY + this.tickSize / 2 + 3);
+        xPos = (xPos + xPosIncrement);
+    }
+    xPos = savedPos;
+    while (xPos < this.domCanvas.width) {
+        context.fillText(unit, xPos, textPosY);
         unit += this.unitsPerTick;
-        xPos = Math.round(xPos + xPosIncrement);
+        xPos = (xPos + xPosIncrement);
     }
     context.restore();
 };
@@ -148,17 +178,29 @@ Graph.prototype.drawYAxis = function () {
     context.moveTo(this._centerX, 0);
     context.lineTo(this._centerX, this.domCanvas.height);
     context.strokeStyle = this.axisColor;
-    context.lineWidth = 1;
+    context.lineWidth = this.axisWidth;
     context.stroke();
+    context.strokeStyle = this.tickColor;
 
     // draw tick marks   
     var yPosIncrement = this.unitsPerTick * this._scaleY;
     var yPos, unit;
+    let savedPos;
+
+    context.fillStyle = this.textColor;
     context.font = this.font;
     context.textAlign = "right";
     context.textBaseline = "middle";
+    let textOffsetX = this.tickSize / 2 + 3;
+    let textPosX = this._centerX - textOffsetX;
+    if (textPosX < textOffsetX) {
+        textPosX = textOffsetX;
+        context.textAlign = "left";
+    } else if (textPosX > this._width - textOffsetX) {
+        textPosX = this._width - textOffsetX;
+    }
 
-    // draw top tick marks  
+    // draw top tick marks 
     if (this._minY <= 0) {
         yPos = this._centerY - yPosIncrement;
         unit = this.unitsPerTick;
@@ -167,17 +209,23 @@ Graph.prototype.drawYAxis = function () {
         yPos = this._height + (this._minY * this._scaleY % yPosIncrement);
         unit = (this._minY - this._minY % this.unitsPerTick);
     }
+    context.beginPath();
+    savedPos = yPos;
     while (yPos > 0) {
-        context.moveTo(this._centerX - this.tickSize / 2, yPos);
-        context.lineTo(this._centerX + this.tickSize / 2, yPos);
+        context.moveTo(0, yPos);
+        context.lineTo(this._height, yPos);
         context.stroke();
-        context.fillText(unit, this._centerX - this.tickSize / 2 - 3, yPos);
+        yPos = Math.round(yPos - yPosIncrement);
+    }
+    yPos = savedPos;
+    while (yPos > 0) {
+
+        context.fillText(unit, textPosX, yPos);
         unit += this.unitsPerTick;
         yPos = Math.round(yPos - yPosIncrement);
     }
 
     // draw bottom tick marks  
-
     if (this._maxY >= 0) {
         yPos = this._centerY + yPosIncrement;
         unit = -1 * this.unitsPerTick;
@@ -186,11 +234,17 @@ Graph.prototype.drawYAxis = function () {
         yPos = (this._maxY * this._scaleY % yPosIncrement);
         unit = (this._maxY - this._maxY % this.unitsPerTick);
     }
+    context.beginPath();
+    savedPos = yPos;
     while (yPos < this.domCanvas.height) {
-        context.moveTo(this._centerX - this.tickSize / 2, yPos);
-        context.lineTo(this._centerX + this.tickSize / 2, yPos);
+        context.moveTo(0, yPos);
+        context.lineTo(this._height, yPos);
         context.stroke();
-        context.fillText(unit, this._centerX - this.tickSize / 2 - 3, yPos);
+                yPos = Math.round(yPos + yPosIncrement);
+    }
+    yPos = savedPos;
+    while (yPos < this.domCanvas.height) {
+        context.fillText(unit, textPosX, yPos);
         unit -= this.unitsPerTick;
         yPos = Math.round(yPos + yPosIncrement);
     }
@@ -319,3 +373,5 @@ Layer.prototype.setSize = function (width, height) {
     this.width = this.canvas.width = width;
     this.height = this.canvas.height = height;
 }
+
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
