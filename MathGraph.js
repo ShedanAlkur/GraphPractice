@@ -104,10 +104,15 @@ Graph.prototype.drawXAxis = function () {
     context.textBaseline = "top";
 
     // draw left tick marks  
-    xPos = this._centerX - xPosIncrement;
-    unit = -1 * this.unitsPerTick;
+    if (this._maxX >= 0) {
+        xPos = this._centerX - xPosIncrement;
+        unit = -1 * this.unitsPerTick;
+    }
+    else {
+        xPos = this._width - (this._maxX * this._scaleX % xPosIncrement);
+        unit = (this._maxX - this._maxX % this.unitsPerTick);
+    }
     while (xPos > 0) {
-        console.log('draw tick');
         context.moveTo(xPos, this._centerY - this.tickSize / 2);
         context.lineTo(xPos, this._centerY + this.tickSize / 2);
         context.stroke();
@@ -117,8 +122,14 @@ Graph.prototype.drawXAxis = function () {
     }
 
     // draw right tick marks  
-    xPos = this._centerX + xPosIncrement;
-    unit = this.unitsPerTick;
+    if (this._minX <= 0) {
+        xPos = this._centerX + xPosIncrement;
+        unit = 1 * this.unitsPerTick;
+    }
+    else {
+        xPos = -(this._minX * this._scaleX % xPosIncrement);
+        unit = (this._minX - this._minX % this.unitsPerTick);
+    }
     while (xPos < this.domCanvas.width) {
         context.moveTo(xPos, this._centerY - this.tickSize / 2);
         context.lineTo(xPos, this._centerY + this.tickSize / 2);
@@ -148,8 +159,14 @@ Graph.prototype.drawYAxis = function () {
     context.textBaseline = "middle";
 
     // draw top tick marks  
-    yPos = this._centerY - yPosIncrement;
-    unit = this.unitsPerTick;
+    if (this._minY <= 0) {
+        yPos = this._centerY - yPosIncrement;
+        unit = this.unitsPerTick;
+    }
+    else {
+        yPos = this._height + (this._minY * this._scaleY % yPosIncrement);
+        unit = (this._minY - this._minY % this.unitsPerTick);
+    }
     while (yPos > 0) {
         context.moveTo(this._centerX - this.tickSize / 2, yPos);
         context.lineTo(this._centerX + this.tickSize / 2, yPos);
@@ -160,8 +177,15 @@ Graph.prototype.drawYAxis = function () {
     }
 
     // draw bottom tick marks  
-    yPos = this._centerY + yPosIncrement;
-    unit = -1 * this.unitsPerTick;
+
+    if (this._maxY >= 0) {
+        yPos = this._centerY + yPosIncrement;
+        unit = -1 * this.unitsPerTick;
+    }
+    else {
+        yPos = (this._maxY * this._scaleY % yPosIncrement);
+        unit = (this._maxY - this._maxY % this.unitsPerTick);
+    }
     while (yPos < this.domCanvas.height) {
         context.moveTo(this._centerX - this.tickSize / 2, yPos);
         context.lineTo(this._centerX + this.tickSize / 2, yPos);
