@@ -116,6 +116,10 @@ input[type="color"]::-webkit-color-swatch {
     width: 40px;
 }
 
+.expression-container__close:hover{
+    color: red;
+    cursor: pointer;
+}
 
 .floatBlock {
     min-width: 20px;

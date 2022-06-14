@@ -203,6 +203,12 @@ function _createExpressionContainer(index) {
     el.addEventListener('blur', _onBlurExpression);
     el.addEventListener('change', _onChangeExpression);
     lineContainer.appendChild(el);
+    // close
+    el = document.createElement('span');
+    el.innerHTML = '&#10006';
+    el.className = 'expression-container__close';
+    el.addEventListener('click', _onClickCloseExpression);
+    lineContainer.appendChild(el);
     container.appendChild(lineContainer);
 
     lineContainer = document.createElement('div');
@@ -321,7 +327,7 @@ const _onInputExpression = function (event) {
         let color = document.getElementById('expression-color-' + id).value;
         graph.drawEquationByX(inputIndex, controller.delegates[inputIndex]
             , color, controller.graphThickness);
-        controller._graph.render();
+            controller._graph.render();
     }
 }
 
@@ -360,6 +366,41 @@ const _onBlurExpression = function (event) {
             controller.removeVariable(key);
         }
     }
+}
+
+const _onClickCloseExpression = function (event) {
+    let element = event.currentTarget;
+    let inputIndex = controller.expressionContainers.indexOf(element.parentNode.parentNode);
+
+    // removing  expression-container
+    if (inputIndex == controller.expressionContainers.length - 1)
+        controller.addExpression();
+    controller.removeExpression(inputIndex);
+    for (let [_, value] of controller.variableUsageMap)
+        value.delete(inputIndex);
+
+    // founding all existing variables in expressions
+    let currentVariables;
+    currentVariables = new Set();
+    controller.variableUsageMap.clear();
+    for (let i in controller.expressions) {
+        for (let v of controller.expressions[i].variables) {
+            if (!controller.variableUsageMap.has(v)) {
+                controller.variableUsageMap.set(v, new Set());
+            }
+            controller.variableUsageMap.get(v).add(parseInt(i));
+            currentVariables.add(v)
+        }
+    }
+
+    // removing elements for removed variables
+    for (let [key, _] of controller.variableContainersMap) {
+        if (!currentVariables.has(key)) {
+            controller.removeVariable(key);
+        }
+    }
+
+    controller.render();
 }
 
 const _onChangeExpression = function (event) {
