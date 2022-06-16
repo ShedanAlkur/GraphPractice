@@ -124,27 +124,26 @@ var controller = new (function Controller(con) {
 /// ON GRAPH EVENT ///
 //////////////////////
 const _onCanvasMousedown = function (event) {
-    console.log('_onmousedownCanvas')
+    // console.log('_onmousedownCanvas')
     controller.isMoving = true;
 }
 
 const _onCanvasTouchstart = function (event) {
-    console.log('_onTouchstartCanvas');
-    console.log(event);
+    // console.log('_onTouchstartCanvas');
     controller.isMoving = true;
 
     event.preventDefault();
 }
 
 const _onCanvasMouseup = function (event) {
-    console.log('_onmouseupCanvas')
+    // console.log('_onmouseupCanvas')
     controller.isMoving = false;
     controller.lastX = null;
     controller.lastY = null;
 }
 
 const _onCanvasTouchend = function (event) {
-    console.log('_onTouchendCanvas');
+    // console.log('_onTouchendCanvas');
     controller.isMoving = false;
     controller.lastX = null;
     controller.lastY = null;
@@ -154,18 +153,23 @@ const _onCanvasTouchend = function (event) {
 }
 
 const _onCanvasTouchcancel = function (event) {
-    console.log('_onTouchcancelCanvas');
-    console.log(event);
+    // console.log('_onTouchcancelCanvas');
+    controller.isMoving = false;
+    controller.lastX = null;
+    controller.lastY = null;
+    controller.lastCenterX = null;
+    controller.lastCenterY = null;
+    controller.lastDist = null;
 }
 
 const _onCanvasMouseenter = function (event) {
-    console.log('_onmouseenterCanvas')
+    // console.log('_onmouseenterCanvas')
     let el = document.getElementById('float-coord');
     el.style.setProperty('display', 'block');
 }
 
 const _onCanvasMouseleave = function (event) {
-    console.log('_onmouseleaveCanvas')
+    // console.log('_onmouseleaveCanvas')
     let el = document.getElementById('float-coord');
     el.style.setProperty('display', 'none');
 
@@ -175,9 +179,7 @@ const _onCanvasMouseleave = function (event) {
 }
 
 const _onCanvasTouchmove = function (event) {
-    console.log('_onTouchmoveCanvas');
-    console.log(event);
-
+    // console.log('_onTouchmoveCanvas');
     let touch1, touch2;
 
     switch (event.touches.length) {
@@ -197,6 +199,7 @@ const _onCanvasTouchmove = function (event) {
         case 2:
             touch1 = event.touches[0];
             touch2 = event.touches[1];
+            // touch2 = { clientX: 494, clientY: 312 };
             controller.isMoving = false;
 
             let [p1x, p1y] = getMousePos(event.currentTarget, touch1.clientX, touch1.clientY);
@@ -207,24 +210,26 @@ const _onCanvasTouchmove = function (event) {
                 controller.lastCenterY = (p1y + p2y) / 2;
                 return;
             }
-            newCenterX = (p1x + p2x) / 2;
-            newCenterY = (p1y + p2y) / 2;
+            let newCenterX = (p1x + p2x) / 2;
+            let newCenterY = (p1y + p2y) / 2;
 
             let dist = Math.hypot(p2x - p1x, p2y - p1y);
-
-            if (controller.lastDist){
+            if (!controller.lastDist) {
                 controller.lastDist = dist;
             }
+            let scale = controller.lastDist / dist;
 
-            let scale = dist / controller.lastDist;
+            controller.lastDist = dist;
+            controller.lastCenterX = newCenterX;
+            controller.lastCenterY = newCenterY;
 
-            controller.scale(newCenterX, newCenterY, scale, scale);
+            controller.scale(250, 250, scale, scale);
             break;
     }
 }
 
 const _onmousemoveCanvas = function (event) {
-    console.log('_onmousemoveCanvas')
+    // console.log('_onmousemoveCanvas')
     let [x, y] = getMousePos(event.currentTarget, event.clientX, event.clientY);
     let el = document.getElementById('float-coord');
     if (controller.isMoving) {
@@ -246,7 +251,7 @@ const _onmousemoveCanvas = function (event) {
 }
 
 const _onwheelCanvas = function (event) {
-    console.log('_onwheelCanvas')
+    // console.log('_onwheelCanvas')
     let [x, y] = getMousePos(event.currentTarget, event.clientX, event.clientY);
     let el = document.getElementById('float-coord');
 
