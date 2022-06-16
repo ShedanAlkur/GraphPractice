@@ -7,9 +7,9 @@ function Graph(con) {
     this._maxY = con.maxY;
 
     // constants
-    this.tickWidth = 150;
+    this.tickDistance = 150;
     this.axisColor = "#000000";
-    this.axisWidth = 2;
+    this.axisWidth = 3;
     this.textColor = "#000000";
     this.font = "10pt Calibri";
     this.tickSize = 20;
@@ -66,18 +66,19 @@ Graph.prototype._updateProps = function () {
     this._centerX = -Math.sign(this._minX) * (Math.round(Math.abs(this._minX / this._rangeX) * this._width));
     this._centerY = Math.sign(this._maxY) * (Math.round(Math.abs(this._maxY / this._rangeY) * this._height));
 
+    this.unitsPerTickX = this._getUnitsPerTick(this._scaleX);
+    this.unitsPerTickY = this._getUnitsPerTick(this._scaleY);
+
     this._iterationX = this._rangeX / 1000;
+    this.graphGapDistance = 400 * this._scaleY;
 
     this.recommendedAccuracyX = Math.max(3, Math.floor(Math.log10(this._scaleX)) + 1)
     this.recommendedAccuracyY = Math.max(3, Math.floor(Math.log10(this._scaleY)) + 1)
-
-    this.unitsPerTickX = this._getUnitsPerTick(this._scaleX);
-    this.unitsPerTickY = this._getUnitsPerTick(this._scaleY);
 }
 
 
 Graph.prototype._getUnitsPerTick = function (scale) {
-    let r = this.tickWidth / scale;
+    let r = this.tickDistance / scale;
     let p = Math.floor(Math.log10(r));
 
     r /= Math.pow(10, p);
@@ -106,19 +107,15 @@ Graph.prototype.drawAxis = function () {
 Graph.prototype.drawXAxis = function () {
     var context = this.axisLayer.context;
     context.save();
-    context.beginPath();
-    context.moveTo(0, this._centerY);
-    context.lineTo(this.domCanvas.width, this._centerY);
-    context.strokeStyle = this.axisColor;
-    context.lineWidth = this.axisWidth;
-    context.stroke();
+
+    // tick marks and axis params
     context.strokeStyle = this.tickColor;
+    var posIncrementX = this.unitsPerTickX * this._scaleX;
+    var posIncrementOver5 = posIncrementX / 5;
+    var mainTickPosX, unit;
+    var mainTickPos, subTickPos;
 
-    // draw tick marks  
-    var xPosIncrement = this.unitsPerTickX * this._scaleX;
-    var xPos, unit;
-    let savedPos;
-
+    // text params
     context.fillStyle = this.textColor;
     context.font = this.font;
     context.textAlign = "center";
@@ -134,73 +131,96 @@ Graph.prototype.drawXAxis = function () {
 
     // draw left tick marks  
     if (this._maxX >= 0) {
-        xPos = this._centerX - xPosIncrement;
+        mainTickPosX = this._centerX - posIncrementX;
+        subTickPos = this._centerX - posIncrementOver5;
         unit = -1 * this.unitsPerTickX;
     }
     else {
-        xPos = this._width - (this._maxX * this._scaleX % xPosIncrement);
+        mainTickPosX = this._width - (this._maxX * this._scaleX % posIncrementX);
+        subTickPos = mainTickPosX - posIncrementOver5;
         unit = (this._maxX - this._maxX % this.unitsPerTickX);
     }
-    context.beginPath();
-    savedPos = xPos;
-    while (xPos > 0) {
-        context.moveTo(xPos, 0);
-        context.lineTo(xPos, this._height);
+    while (subTickPos > 0) {
+        context.beginPath();
+        context.lineWidth = this.axisWidth / 2;
+        for (let j = 0; j < 4; j++) {
+            context.moveTo(subTickPos, 0);
+            context.lineTo(subTickPos, this._height);
+            context.stroke();
+            subTickPos -= posIncrementOver5;
+        }
+        context.beginPath();
+        context.lineWidth = this.axisWidth;
+        context.moveTo(subTickPos, 0);
+        context.lineTo(subTickPos, this._height);
         context.stroke();
-        xPos = (xPos - xPosIncrement);
+        subTickPos -= posIncrementOver5;
     }
-    xPos = savedPos;
-    while (xPos > 0) {
-        context.fillText(round(unit, this.recommendedAccuracyX), xPos, textPosY);
+    mainTickPos = mainTickPosX;
+    while (mainTickPos > 0) {
+        context.fillText(round(unit, this.recommendedAccuracyX), mainTickPos, textPosY);
         unit -= this.unitsPerTickX;
-        xPos = (xPos - xPosIncrement);
+        mainTickPos -= posIncrementX;
     }
-
-    context.save();
-    context.restore();
 
     // draw right tick marks 
     if (this._minX <= 0) {
-        xPos = this._centerX + xPosIncrement;
+        mainTickPosX = this._centerX + posIncrementX;
+        subTickPos = this._centerX + posIncrementOver5;
         unit = 1 * this.unitsPerTickX;
     }
     else {
-        xPos = -(this._minX * this._scaleX % xPosIncrement);
+        mainTickPosX = -(this._minX * this._scaleX % posIncrementX);
+        subTickPos = mainTickPosX + posIncrementOver5;
         unit = (this._minX - this._minX % this.unitsPerTickX);
     }
-    context.beginPath();
-    savedPos = xPos;
-    while (xPos < this.domCanvas.width) {
-        context.moveTo(xPos, 0);
-        context.lineTo(xPos, this._height);
+    while (subTickPos < this.domCanvas.width) {
+        context.beginPath();
+        context.lineWidth = this.axisWidth / 2;
+        for (let j = 0; j < 4; j++) {
+            context.moveTo(subTickPos, 0);
+            context.lineTo(subTickPos, this._height);
+            context.stroke();
+            subTickPos += posIncrementOver5;
+        }
+        context.beginPath();
+        context.lineWidth = this.axisWidth;
+        context.moveTo(subTickPos, 0);
+        context.lineTo(subTickPos, this._height);
         context.stroke();
-        xPos = (xPos + xPosIncrement);
+        subTickPos += posIncrementOver5;
     }
-    xPos = savedPos;
-    while (xPos < this.domCanvas.width) {
-        context.fillText(round(unit, this.recommendedAccuracyX), xPos, textPosY);
+    mainTickPos = mainTickPosX;
+    while (mainTickPos < this.domCanvas.width) {
+        context.fillText(round(unit, this.recommendedAccuracyX), mainTickPos, textPosY);
         unit += this.unitsPerTickX;
-        xPos = (xPos + xPosIncrement);
+        mainTickPos += posIncrementX;
     }
+
+    // draw axis
+    context.strokeStyle = this.axisColor;
+    context.lineWidth = this.axisWidth;
+    context.beginPath();
+    context.moveTo(0, this._centerY);
+    context.lineTo(this.domCanvas.width, this._centerY);
+    context.stroke();
+
     context.restore();
 };
 
 Graph.prototype.drawYAxis = function () {
     var context = this.axisLayer.context;
     context.save();
-    context.beginPath();
-    context.moveTo(this._centerX, 0);
-    context.lineTo(this._centerX, this.domCanvas.height);
-    context.strokeStyle = this.axisColor;
-    context.lineWidth = this.axisWidth;
-    context.stroke();
+
+
+    // tick marks and axis params
     context.strokeStyle = this.tickColor;
+    var posIncrementY = this.unitsPerTickY * this._scaleY;
+    var posIncrementOver5 = posIncrementY / 5;
+    var mainTickPosY, unit;
+    var mainTickPos, subTickPos;
 
-    // draw tick marks   
-    var yPosIncrement = this.unitsPerTickY * this._scaleY;
-    var yPos, unit;
-    let savedPos;
-
+    // text params
     context.fillStyle = this.textColor;
     context.font = this.font;
     context.textAlign = "right";
@@ -216,52 +236,80 @@ Graph.prototype.drawYAxis = function () {
 
     // draw top tick marks 
     if (this._minY <= 0) {
-        yPos = this._centerY - yPosIncrement;
+        mainTickPosY = this._centerY - posIncrementY;
+        subTickPos = this._centerY - posIncrementOver5
         unit = this.unitsPerTickY;
     }
     else {
-        yPos = this._height + (this._minY * this._scaleY % yPosIncrement);
+        mainTickPosY = this._height + (this._minY * this._scaleY % posIncrementY);
+        subTickPos = mainTickPosY - posIncrementOver5
         unit = (this._minY - this._minY % this.unitsPerTickY);
     }
-    context.beginPath();
-    savedPos = yPos;
-    while (yPos > 0) {
-        context.moveTo(0, yPos);
-        context.lineTo(this._height, yPos);
+    while (subTickPos > 0) {
+        context.beginPath();
+        context.lineWidth = this.axisWidth / 2;
+        for (let j = 0; j < 4; j++) {
+            context.moveTo(0, subTickPos);
+            context.lineTo(this._width, subTickPos);
+            context.stroke();
+            subTickPos -= posIncrementOver5;
+        }
+        context.beginPath();
+        context.lineWidth = this.axisWidth;
+        context.moveTo(0, subTickPos);
+        context.lineTo(this._width, subTickPos);
         context.stroke();
-        yPos = Math.round(yPos - yPosIncrement);
+        subTickPos -= posIncrementOver5;
     }
-    yPos = savedPos;
-    while (yPos > 0) {
-
-        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, yPos);
+    mainTickPos = mainTickPosY;
+    while (mainTickPosY > 0) {
+        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, mainTickPosY);
         unit += this.unitsPerTickY;
-        yPos = Math.round(yPos - yPosIncrement);
+        mainTickPosY -= posIncrementY;
     }
 
     // draw bottom tick marks  
     if (this._maxY >= 0) {
-        yPos = this._centerY + yPosIncrement;
+        mainTickPosY = this._centerY + posIncrementY;
+        subTickPos = this._centerY + posIncrementOver5;
         unit = -1 * this.unitsPerTickY;
     }
     else {
-        yPos = (this._maxY * this._scaleY % yPosIncrement);
+        mainTickPosY = (this._maxY * this._scaleY % posIncrementY);
+        subTickPos = mainTickPosY + posIncrementOver5;
         unit = (this._maxY - this._maxY % this.unitsPerTickY);
     }
-    context.beginPath();
-    savedPos = yPos;
-    while (yPos < this.domCanvas.height) {
-        context.moveTo(0, yPos);
-        context.lineTo(this._height, yPos);
+    while (subTickPos < this.domCanvas.height) {
+        context.beginPath();
+        context.lineWidth = this.axisWidth / 2;
+        for (let j = 0; j < 4; j++) {
+            context.moveTo(0, subTickPos);
+            context.lineTo(this._width, subTickPos);
+            context.stroke();
+            subTickPos += posIncrementOver5;
+        }
+        context.beginPath();
+        context.lineWidth = this.axisWidth;
+        context.moveTo(0, subTickPos);
+        context.lineTo(this._width, subTickPos);
         context.stroke();
-        yPos = Math.round(yPos + yPosIncrement);
+        subTickPos += posIncrementOver5;
     }
-    yPos = savedPos;
-    while (yPos < this.domCanvas.height) {
-        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, yPos);
+    mainTickPos = mainTickPosY;
+    while (mainTickPosY < this.domCanvas.height) {
+        context.fillText(round(unit, this.recommendedAccuracyY), textPosX, mainTickPosY);
         unit -= this.unitsPerTickY;
-        yPos = Math.round(yPos + yPosIncrement);
+        mainTickPosY += posIncrementY;
     }
+
+    // draw axis
+    context.strokeStyle = this.axisColor;
+    context.lineWidth = this.axisWidth;
+    context.beginPath();
+    context.moveTo(this._centerX, 0);
+    context.lineTo(this._centerX, this.domCanvas.height);
+    context.stroke();
+
     context.restore();
 };
 
@@ -284,12 +332,18 @@ Graph.prototype.drawEquationByX = function (layerIndex, equation, color, thickne
     this.transformContext(context);
 
     context.beginPath();
+    let lastY;
 
     try {
-        context.moveTo(this._minX, equation(this._minX));
+        lastY = equation(this._minX);
+        context.moveTo(this._minX, lastY);
 
         for (var x = this._minX + this._iterationX; x <= this._maxX; x += this._iterationX) {
-            context.lineTo(x, equation(x));
+            let y = equation(x);
+            if (Math.abs(y - lastY) >= this.graphGapDistance) {
+                // обрезать путь
+            }
+            context.lineTo(x, y);
         }
     } catch (error) {
         throw error;
