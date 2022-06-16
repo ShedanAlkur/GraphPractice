@@ -223,7 +223,7 @@ const _onCanvasTouchmove = function (event) {
             controller.lastCenterX = newCenterX;
             controller.lastCenterY = newCenterY;
 
-            controller.scale(250, 250, scale, scale);
+            controller.scale(newCenterX, newCenterY, scale, scale);
             break;
     }
 }
