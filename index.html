@@ -17,15 +17,28 @@
         <header>
             <h3>Визуализация математических функций</h3>
         </header>
+
+        <input id="expression-side-box" type="checkbox" hidden>
+        <label id="expression-btn-open" for="expression-side-box">f(x)</label>
+
+        <input id="variable-side-box" type="checkbox" hidden>
+        <label id="variable-btn-open" for="variable-side-box">vars</label>
+
         <div id="user-interface">
             <div id="left" left>
                 <div id="user-input-containers">
-                    <div class="sticky-header">f(x):</div>
+                    <div class="sticky-header">
+                        <span>f(x):</span>
+                        <label id="expression-btn-close" for="expression-side-box">Свернуть</label>
+                    </div>
                 </div>
                 <div id="variables-input-containers">
-                    <div class="sticky-header">Переменные:</div>
-                </div>
-            </div>
+                    <div class="sticky-header">
+                        <span>Переменные:</span>
+                        <label id="variable-btn-close" for="variable-side-box">Свернуть</label>
+                    </div>
+                </div>                
+            </div>            
             <div id="right" left>
                 <canvas width="500" height="500" id="graph-canvas"></canvas>
             </div>
