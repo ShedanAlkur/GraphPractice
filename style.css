@@ -147,13 +147,11 @@ input[type="color"]::-webkit-color-swatch {
     border-bottom: 1px dashed rgb(119, 119, 119);
 }
 
-
 #expression-btn-open,
 #variable-btn-open {
     display: none;
     position: fixed;
     cursor: pointer;
-    top: 50px;
     text-orientation: mixed;
     background-color: rgb(239, 239, 239);
     border: 1px solid rgb(119, 119, 119);
@@ -161,6 +159,14 @@ input[type="color"]::-webkit-color-swatch {
     text-align: center;
     box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16),
         0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+#expression-btn-open {
+    top: 50px;
+}
+
+#variable-btn-open {
+    top: 100px;
 }
 
 
@@ -171,17 +177,15 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 #variable-btn-open {
-    right: 0;
-    writing-mode: sideways-lr;
-    border-radius: 5px 0 0 5px;
+    left: 0;
+    writing-mode: vertical-rl;
+    border-radius: 0 5px 5px 0;
 }
 
 #expression-btn-open:hover,
 #variable-btn-open:hover {
     box-shadow: 0 5px 11px 0 rgba(0, 0, 0, 0.18), 0 4px 15px 0 rgba(0, 0, 0, 0.15);
 }
-
-
 
 #expression-btn-close,
 #variable-btn-close {
@@ -223,7 +227,7 @@ input[type="color"]::-webkit-color-swatch {
 
     #variables-input-containers {
         border-left: 1px solid rgb(119, 119, 119);
-        transform: translateX(100%);
+        transform: translateX(-100%);
     }
 
     .expression-container,
