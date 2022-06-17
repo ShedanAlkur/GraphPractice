@@ -25,8 +25,7 @@ var controller = new (function Controller(con) {
     // graph.drawPolEquation(0, function (fi) {
     //     // return r = fi/2;
     //     return r = 10 * Math.sin(3/2 * fi);
-    // }, "green", 1);
-
+    // }, "green", 1); 
 
     Controller.prototype.setGraph = function (graph) {
         this._graph = graph;
@@ -41,6 +40,17 @@ var controller = new (function Controller(con) {
         this._graph.domCanvas.addEventListener('touchend', _onCanvasTouchend);
         this._graph.domCanvas.addEventListener('touchmove', _onCanvasTouchmove);
         this._graph.domCanvas.addEventListener('touchstart', _onCanvasTouchstart);
+
+        window.addEventListener('resize', resizeCanvas, false);
+        function resizeCanvas(event) {
+            let el = controller._graph.domCanvas.parentNode;
+            // console.log('el.offsetWidth, el.offsetHeight', el.offsetWidth, el.offsetHeight);
+            controller._graph.setSize(el.clientWidth - 10, el.clientHeight - 10);
+            controller._graph.drawAxis();
+            controller.redrawAllGraphs();
+            controller.render();
+        }
+        resizeCanvas();
     }
 
     Controller.prototype.render = function () { this._graph.render(); }

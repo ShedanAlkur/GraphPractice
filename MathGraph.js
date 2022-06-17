@@ -30,6 +30,20 @@ function Graph(con) {
     this.drawAxis();
 }
 
+Graph.prototype.setSize = function (width, height) {
+    this._width = width;
+    this._height = height;
+    this.domCanvas.width = this.axisLayer.canvas.width = width;
+    this.domCanvas.height = this.axisLayer.canvas.height = height;
+    this.axisLayer.canvas.width = width;
+    this.axisLayer.canvas.height = height;
+    for (let i = 0; i < this.graphLayers.length; i++) {
+        this.graphLayers[i].canvas.width = width;
+        this.graphLayers[i].canvas.height = height;
+    }
+    this._updateProps();
+}
+
 Graph.prototype.offset = function (offsetX, offsetY) {
     this._minX += offsetX;
     this._maxX += offsetX;
@@ -357,7 +371,7 @@ Graph.prototype.drawEquationByX = function (layerIndex, equation, color, thickne
     // context.restore();
 };
 
-Graph.prototype.drawPolEquation = function (layerIndex, equation, color, thickness) {
+Graph.prototype.drawPolEquation = function (layerIndex, equation, startAngle, endAngle, color, thickness) {
     var context;
     if (this.graphLayers[layerIndex]) context = this.graphLayers[layerIndex].context;
     else {
@@ -376,11 +390,10 @@ Graph.prototype.drawPolEquation = function (layerIndex, equation, color, thickne
     let step = 2 * Math.PI / 1000;
 
     try {
-        let startFi = -Math.PI * 2;
-        let r = equation(startFi);
+        let r = equation(startAngle);
         context.moveTo(r * Math.cos(fi), r * Math.sin(fi));
 
-        for (var fi = startFi + step; fi <= 2 * Math.PI; fi += step) {
+        for (var fi = startAngle + step; fi <= endAngle; fi += step) {
             r = equation(fi);
             context.lineTo(r * Math.cos(fi), r * Math.sin(fi));
         }

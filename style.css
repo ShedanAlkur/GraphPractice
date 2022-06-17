@@ -61,6 +61,10 @@ input[type="color"]::-webkit-color-swatch {
 #right {
     flex: 1;
     border-top: 1px solid rgb(119, 119, 119);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #user-input-containers,
@@ -73,9 +77,10 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 #graph-canvas {
-    border-right: 1px solid;
-    border-bottom: 1px solid;
+    border: 1px solid;
     background-color: white;
+    /* width: 100%;
+    height: 100%; */
 }
 
 .expression-container,
@@ -208,7 +213,7 @@ input[type="color"]::-webkit-color-swatch {
         max-height: 100%;
         border-top-style: none;
         border-bottom-style: none;
-        transition: transform 200ms cubic-bezier(0.17, 0.04, 0.03, 0.94);
+        transition: transform 200ms cubic-bezier(0.17, 0.04, 0.03, 0.94) 0.1s;
     }
 
     #user-input-containers {
@@ -228,11 +233,13 @@ input[type="color"]::-webkit-color-swatch {
     }
 
     #expression-side-box:checked~*>*>#user-input-containers {
+        width: 100%;
         transform: translateX(0%);
         box-shadow: 0 5px 11px 0 rgba(0, 0, 0, 0.18), 0 4px 15px 0 rgba(0, 0, 0, 0.15)
     }
 
     #variable-side-box:checked~*>*>#variables-input-containers {
+        width: 100%;
         transform: translateX(0%);
         box-shadow: 0 0 11px 5px rgba(0, 0, 0, 0.18), 0 0 15px 4px rgba(0, 0, 0, 0.15)
     }
