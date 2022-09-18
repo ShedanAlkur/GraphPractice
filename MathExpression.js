@@ -1,11 +1,11 @@
 const SPLIT_TO_TOKENS_PATTERN =
     /\d+(?:[.]\d+)?|,|\+|-|\*|\/|\^|>=|>|<=|<|==|!=|&&|\|\||!|\(|\)|[A-Za-z1-9_]+/g;
 
-const BINARY_OPERATORS = ['+', '-', '*', '/', '^']
+const BINARY_OPERATORS = ['+', '-', '*', '/', '^'];
 const FUNCTIONS = ['sin', 'cos', 'tan', 'floor', 'ceil',
     'round', 'trunc', 'max', 'min', 'minus', 'sqrt', 'abs',
-    'sign', 'log', 'log10', 'log2']
-const CONSTANTS = ['pi', 'e']
+    'sign', 'log', 'log10', 'log2'];
+const CONSTANTS = ['pi', 'e'];
 
 const PRIORITIES = {
     '+': 5,
@@ -17,6 +17,8 @@ const PRIORITIES = {
     '(': 10,
 }
 const FUNCTIONS_PRIORITY = 8;
+
+const RIGHTASSOCIATIVE_OPERATORS = ['^'];
 
 (function () {
     for (let func in FUNCTIONS) {
@@ -49,6 +51,10 @@ function _isOperator(token) {
     return token in PRIORITIES;
 }
 
+function _isRightAssociativeOperator(token) {
+    return RIGHTASSOCIATIVE_OPERATORS.includes(token);
+}
+
 function _isBinaryOperator(token) {
     return BINARY_OPERATORS.includes(token);
 }
@@ -62,7 +68,9 @@ function _isConstant(token) {
 }
 
 function _isBiggerPriority(op1, op2) {
-    return PRIORITIES[op1] > PRIORITIES[op2];
+    if (_isRightAssociativeOperator(op1) && _isRightAssociativeOperator(op2))
+        return PRIORITIES[op1] >= PRIORITIES[op2]; // todo: исправить откровенный костыль!
+    else return PRIORITIES[op1] > PRIORITIES[op2];
 }
 
 function Expression(stringExpression, varBeginStr, varEndStr) {

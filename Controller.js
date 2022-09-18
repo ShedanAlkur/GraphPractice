@@ -1,9 +1,4 @@
 var controller = new (function Controller(con) {
-    // user defined properties 
-    /*this.graph = con.graph;
-    this.hExpressionsContainer = con.hExpressionsContainer;
-    this.hVariablesContainer = con.hVariablesContainer;*/
-
     this._graph;
     this.hExpressionsContainer;
     this.hVariablesContainer;
@@ -11,8 +6,13 @@ var controller = new (function Controller(con) {
     // constants
     this.graphThickness = 2;
 
-    // relationships
-    // this.hCanvas = this.graph.domCanvas;
+    // user input
+    this.isMoving = false;
+    this.lastX = null;
+    this.lastY = null;
+    this.lastCenterX = null;
+    this.lastCenterY = null;
+    this.lastDist = null;
 
     // containers
     this.expressions = []; // Array[Expression]
@@ -22,21 +22,35 @@ var controller = new (function Controller(con) {
     this.variableContainersMap = new Map(); // map(str, tagElement)
     this.variableUsageMap = new Map(); // map(str, set(index))
 
-
     // graph.drawPolEquation(0, function (fi) {
     //     // return r = fi/2;
     //     return r = 10 * Math.sin(3/2 * fi);
-    // }, "green", 1);
-
+    // }, "green", 1); 
 
     Controller.prototype.setGraph = function (graph) {
         this._graph = graph;
-        this._graph.domCanvas.addEventListener('mousedown', _onmousedownCanvas);
-        this._graph.domCanvas.addEventListener('mouseup', _onmouseupCanvas);
-        this._graph.domCanvas.addEventListener('mouseenter', _onmouseenterCanvas);
+        this._graph.domCanvas.addEventListener('mousedown', _onCanvasMousedown);
+        this._graph.domCanvas.addEventListener('mouseup', _onCanvasMouseup);
+        this._graph.domCanvas.addEventListener('mouseenter', _onCanvasMouseenter);
         this._graph.domCanvas.addEventListener('mousemove', _onmousemoveCanvas);
-        this._graph.domCanvas.addEventListener('mouseleave', _onmouseleaveCanvas);
+        this._graph.domCanvas.addEventListener('mouseleave', _onCanvasMouseleave);
         this._graph.domCanvas.addEventListener('wheel', _onwheelCanvas);
+
+        this._graph.domCanvas.addEventListener('touchcancel', _onCanvasTouchcancel);
+        this._graph.domCanvas.addEventListener('touchend', _onCanvasTouchend);
+        this._graph.domCanvas.addEventListener('touchmove', _onCanvasTouchmove);
+        this._graph.domCanvas.addEventListener('touchstart', _onCanvasTouchstart);
+
+        window.addEventListener('resize', resizeCanvas, false);
+        function resizeCanvas(event) {
+            let el = controller._graph.domCanvas.parentNode;
+            // console.log('el.offsetWidth, el.offsetHeight', el.offsetWidth, el.offsetHeight);
+            controller._graph.setSize(el.clientWidth - 10, el.clientHeight - 10);
+            controller._graph.drawAxis();
+            controller.redrawAllGraphs();
+            controller.render();
+        }
+        resizeCanvas();
     }
 
     Controller.prototype.render = function () { this._graph.render(); }
@@ -119,39 +133,123 @@ var controller = new (function Controller(con) {
 //////////////////////
 /// ON GRAPH EVENT ///
 //////////////////////
-const _onmousedownCanvas = function (event) {
-    controller.mousePressed = true;
+const _onCanvasMousedown = function (event) {
+    // console.log('_onmousedownCanvas')
+    controller.isMoving = true;
 }
 
-const _onmouseupCanvas = function (event) {
-    controller.mousePressed = false;
-    controller.lastMouseX = undefined;
-    controller.lastMouseY = undefined;
+const _onCanvasTouchstart = function (event) {
+    // console.log('_onTouchstartCanvas');
+    controller.isMoving = true;
+
+    event.preventDefault();
 }
 
-const _onmouseenterCanvas = function (event) {
+const _onCanvasMouseup = function (event) {
+    // console.log('_onmouseupCanvas')
+    controller.isMoving = false;
+    controller.lastX = null;
+    controller.lastY = null;
+}
+
+const _onCanvasTouchend = function (event) {
+    // console.log('_onTouchendCanvas');
+    controller.isMoving = false;
+    controller.lastX = null;
+    controller.lastY = null;
+    controller.lastCenterX = null;
+    controller.lastCenterY = null;
+    controller.lastDist = null;
+}
+
+const _onCanvasTouchcancel = function (event) {
+    // console.log('_onTouchcancelCanvas');
+    controller.isMoving = false;
+    controller.lastX = null;
+    controller.lastY = null;
+    controller.lastCenterX = null;
+    controller.lastCenterY = null;
+    controller.lastDist = null;
+}
+
+const _onCanvasMouseenter = function (event) {
+    // console.log('_onmouseenterCanvas')
     let el = document.getElementById('float-coord');
     el.style.setProperty('display', 'block');
 }
 
-const _onmouseleaveCanvas = function (event) {
+const _onCanvasMouseleave = function (event) {
+    // console.log('_onmouseleaveCanvas')
     let el = document.getElementById('float-coord');
     el.style.setProperty('display', 'none');
 
-    controller.mousePressed = false;
-    controller.lastMouseX = undefined;
-    controller.lastMouseY = undefined;
+    controller.isMoving = false;
+    controller.lastX = null;
+    controller.lastY = null;
+}
+
+const _onCanvasTouchmove = function (event) {
+    // console.log('_onTouchmoveCanvas');
+    let touch1, touch2;
+
+    switch (event.touches.length) {
+        case 1:
+            touch1 = event.touches[0];
+            let [x, y] = getMousePos(event.currentTarget, touch1.clientX, touch1.clientY);
+            if (controller.isMoving) {
+                if (controller.lastX) {
+                    let moveX = controller.lastX - x;
+                    let moveY = controller.lastY - y;
+                    controller.offset(moveX ? moveX : 0, moveY ? moveY : 0);
+                }
+                controller.lastX = x;
+                controller.lastY = y;
+            }
+            break;
+        case 2:
+            touch1 = event.touches[0];
+            touch2 = event.touches[1];
+            // touch2 = { clientX: 494, clientY: 312 };
+            controller.isMoving = false;
+
+            let [p1x, p1y] = getMousePos(event.currentTarget, touch1.clientX, touch1.clientY);
+            let [p2x, p2y] = getMousePos(event.currentTarget, touch2.clientX, touch2.clientY);
+
+            if (!controller.lastCenterX) {
+                controller.lastCenterX = (p1x + p2x) / 2;
+                controller.lastCenterY = (p1y + p2y) / 2;
+                return;
+            }
+            let newCenterX = (p1x + p2x) / 2;
+            let newCenterY = (p1y + p2y) / 2;
+
+            let dist = Math.hypot(p2x - p1x, p2y - p1y);
+            if (!controller.lastDist) {
+                controller.lastDist = dist;
+            }
+            let scale = controller.lastDist / dist;
+
+            controller.lastDist = dist;
+            controller.lastCenterX = newCenterX;
+            controller.lastCenterY = newCenterY;
+
+            controller.scale(newCenterX, newCenterY, scale, scale);
+            break;
+    }
 }
 
 const _onmousemoveCanvas = function (event) {
-    let [x, y] = getMousePos(event);
+    // console.log('_onmousemoveCanvas')
+    let [x, y] = getMousePos(event.currentTarget, event.clientX, event.clientY);
     let el = document.getElementById('float-coord');
-    if (controller.mousePressed) {
-        let moveX = controller.lastMouseX - x;
-        let moveY = controller.lastMouseY - y;
-        controller.lastMouseX = x;
-        controller.lastMouseY = y;
-        controller.offset(moveX ? moveX : 0, moveY ? moveY : 0);
+    if (controller.isMoving) {
+        if (controller.lastX) {
+            let moveX = controller.lastX - x;
+            let moveY = controller.lastY - y;
+            controller.offset(moveX ? moveX : 0, moveY ? moveY : 0);
+        }
+        controller.lastX = x;
+        controller.lastY = y;
 
         el.style.left = '-100px';
         el.style.top = '-100px';
@@ -163,7 +261,8 @@ const _onmousemoveCanvas = function (event) {
 }
 
 const _onwheelCanvas = function (event) {
-    let [x, y] = getMousePos(event);
+    // console.log('_onwheelCanvas')
+    let [x, y] = getMousePos(event.currentTarget, event.clientX, event.clientY);
     let el = document.getElementById('float-coord');
 
     let scale = event.deltaY > 0 ? 1.2 : 1 / 1.2;
@@ -327,7 +426,7 @@ const _onInputExpression = function (event) {
         let color = document.getElementById('expression-color-' + id).value;
         graph.drawEquationByX(inputIndex, controller.delegates[inputIndex]
             , color, controller.graphThickness);
-            controller._graph.render();
+        controller._graph.render();
     }
 }
 
@@ -526,14 +625,13 @@ function _createDelegate(expression, paramName) {
     return Function(str)();
 }
 
-function getMousePos(event) {
-    let canvas = event.currentTarget;
-    let rect = canvas.getBoundingClientRect(), // abs. size of element
-        scaleX = canvas.width / rect.width,    // relationship bitmap vs. element for x
-        scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for y
+function getMousePos(canvas, clientX, clientY) {
+    let rect = canvas.getBoundingClientRect(); // abs. size of element
+    let scaleX = canvas.width / rect.width;    // relationship bitmap vs. element for x
+    let scaleY = canvas.height / rect.height;  // relationship bitmap vs. element for y
 
     return [
-        (event.clientX - rect.left) * scaleX   // scale mouse coordinates after they have
-        , (event.clientY - rect.top) * scaleY     // been adjusted to be relative to element
+        (clientX - rect.left) * scaleX,   // scale mouse coordinates after they have
+        (clientY - rect.top) * scaleY     // been adjusted to be relative to element
     ]
 }

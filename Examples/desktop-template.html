@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        html,
+        body {
+            height: 100%;
+            background-color: rgb(152, 240, 240);
+            margin: 0;
+        }
+
+        .content {
+            height: 100%;
+            background-color: blueviolet;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: aqua;
+        }
+
+        .interface {
+            background-color: chartreuse;
+            flex: 1;
+            display: flex;
+        }
+
+        .left {
+            width: 300px;
+            background-color: brown;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .right {
+            background-color: chocolate;
+            flex: 1;
+        }
+
+        .container1,
+        .container2 {
+            background-color: aliceblue;
+            border: 1px solid black;
+            margin: 4px;
+            max-height: 50%;
+        }
+
+        .canvas {
+            background-color: aliceblue;
+            width: 200px;
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <header>Header</header>
+        <div class="interface">
+            <div class="left">
+                <div class="container1">container1</div>
+                <div class="container2">container2</div>
+            </div>
+            <div class="right">
+                <div class="canvas">canvas</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
